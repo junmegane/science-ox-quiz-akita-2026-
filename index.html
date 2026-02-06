@@ -5,16 +5,38 @@
 <title>理科 ○× クイズ</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { font-family: sans-serif; background:#f4f6f8; text-align:center; margin:0; }
-.card { background:#fff; padding:24px; margin:20px auto; max-width:760px; border-radius:12px; }
-button { font-size:18px; padding:10px 28px; margin:8px; }
+body {
+  font-family: sans-serif;
+  background:#f4f6f8;
+  text-align:center;
+  margin:0;
+}
+.card {
+  background:#fff;
+  padding:24px;
+  margin:20px auto;
+  max-width:760px;
+  border-radius:12px;
+}
+button {
+  font-size:18px;
+  padding:10px 28px;
+  margin:8px;
+}
 .correct { color:green; }
 .wrong { color:red; }
-.review { text-align:left; margin-top:16px; }
-hr { border:none; border-top:1px solid #ddd; }
+.review {
+  text-align:left;
+  margin-top:16px;
+}
+hr {
+  border:none;
+  border-top:1px solid #ddd;
+}
 </style>
 </head>
 <body>
+
 <div class="card" id="game"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -26,6 +48,7 @@ let current = 0;
 let score = 0;
 let answered = false;
 
+/* CSV読み込み */
 Papa.parse("questions.csv", {
   download: true,
   header: true,
@@ -39,19 +62,24 @@ Papa.parse("questions.csv", {
     startGame();
   },
   error: function() {
-    document.getElementById("game").innerHTML = "<p>読み込みに失敗しました</p>";
+    document.getElementById("game").innerHTML =
+      "<p>問題の読み込みに失敗しました</p>";
   }
 });
 
+/* ゲーム開始・再挑戦 */
 function startGame() {
   current = 0;
   score = 0;
   answered = false;
   log = [];
-  questions = [...allQuestions].sort(() => Math.random() - 0.5).slice(0, 10);
+  questions = [...allQuestions]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 10);
   renderQuestion();
 }
 
+/* 問題表示 */
 function renderQuestion() {
   answered = false;
   document.getElementById("game").innerHTML = `
@@ -64,6 +92,7 @@ function renderQuestion() {
   `;
 }
 
+/* 回答処理 */
 function answer(choice) {
   if (answered) return;
   answered = true;
@@ -73,51 +102,69 @@ function answer(choice) {
 
   log.push({
     q: questions[current].q,
-    correct: questions[current].a ? "○" : "×",
     user: choice ? "○" : "×",
+    correct: questions[current].a ? "○" : "×",
     isCorrect: correct,
     e: questions[current].e
   });
 
-  document.getElementById("result").textContent = correct ? "⭕ 正解" : "❌ 不正解";
-  document.getElementById("explanation").textContent = questions[current].e;
+  document.getElementById("result").textContent =
+    correct ? "⭕ 正解" : "❌ 不正解";
+  document.getElementById("explanation").textContent =
+    questions[current].e;
 
   document.getElementById("game").innerHTML += `
     <button onclick="next()">➡ 次の問題へ</button>
   `;
 }
 
+/* 次の問題 or 結果画面 */
 function next() {
   current++;
   if (current < 10) {
     renderQuestion();
   } else {
-    showReview();
+    showResult();
   }
 }
 
+/* 結果画面（選択） */
+function showResult() {
+  document.getElementById("game").innerHTML = `
+    <h2>結果</h2>
+    <p>得点：${score} / 10</p>
+    <button onclick="showReview()">🔍 解答を振り返る</button>
+    <button onclick="startGame()">🔁 もう一度挑戦</button>
+  `;
+}
+
+/* 振り返り画面 */
 function showReview() {
-  let html = `<h2>結果</h2><p>得点：${score} / 10</p>`;
-  html += `<div class="review">`;
+  let html = `<h2>解答の振り返り</h2><div class="review">`;
+
   log.forEach((item, i) => {
     html += `
       <p>
-        <strong>第${i+1}問</strong> ${item.q}<br>
+        <strong>第${i + 1}問</strong> ${item.q}<br>
         あなた：${item.user} ／ 正解：${item.correct}
-        <span class="${item.isCorrect ? 'correct' : 'wrong'}">
-          ${item.isCorrect ? '（正解）' : '（不正解）'}
+        <span class="${item.isCorrect ? "correct" : "wrong"}">
+          ${item.isCorrect ? "（正解）" : "（不正解）"}
         </span><br>
         解説：${item.e}
       </p>
       <hr>
     `;
   });
-  html += `</div>`;
-  html += `<button onclick="startGame()">🔁 もう一度挑戦</button>`;
+
+  html += `
+    </div>
+    <button onclick="showResult()">⬅ 結果に戻る</button>
+    <button onclick="startGame()">🔁 もう一度挑戦</button>
+  `;
 
   document.getElementById("game").innerHTML = html;
 }
 </script>
+
 </body>
 </html>
-
