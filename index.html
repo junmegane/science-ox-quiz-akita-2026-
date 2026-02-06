@@ -6,10 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: sans-serif; background:#f4f6f8; text-align:center; margin:0; }
-.card { background:#fff; padding:24px; margin:20px auto; max-width:640px; border-radius:12px; }
-button { font-size:20px; padding:12px 32px; margin:10px; }
-#result { font-size:20px; margin-top:10px; }
-#explanation { margin-top:12px; color:#333; }
+.card { background:#fff; padding:24px; margin:20px auto; max-width:760px; border-radius:12px; }
+button { font-size:18px; padding:10px 28px; margin:8px; }
+.correct { color:green; }
+.wrong { color:red; }
+.review { text-align:left; margin-top:16px; }
+hr { border:none; border-top:1px solid #ddd; }
 </style>
 </head>
 <body>
@@ -19,6 +21,7 @@ button { font-size:20px; padding:12px 32px; margin:10px; }
 <script>
 let allQuestions = [];
 let questions = [];
+let log = [];
 let current = 0;
 let score = 0;
 let answered = false;
@@ -44,6 +47,7 @@ function startGame() {
   current = 0;
   score = 0;
   answered = false;
+  log = [];
   questions = [...allQuestions].sort(() => Math.random() - 0.5).slice(0, 10);
   renderQuestion();
 }
@@ -64,13 +68,18 @@ function answer(choice) {
   if (answered) return;
   answered = true;
 
-  if (choice === questions[current].a) {
-    document.getElementById("result").textContent = "⭕ 正解";
-    score++;
-  } else {
-    document.getElementById("result").textContent = "❌ 不正解";
-  }
+  const correct = choice === questions[current].a;
+  if (correct) score++;
 
+  log.push({
+    q: questions[current].q,
+    correct: questions[current].a ? "○" : "×",
+    user: choice ? "○" : "×",
+    isCorrect: correct,
+    e: questions[current].e
+  });
+
+  document.getElementById("result").textContent = correct ? "⭕ 正解" : "❌ 不正解";
   document.getElementById("explanation").textContent = questions[current].e;
 
   document.getElementById("game").innerHTML += `
@@ -83,13 +92,32 @@ function next() {
   if (current < 10) {
     renderQuestion();
   } else {
-    document.getElementById("game").innerHTML = `
-      <h2>終了！</h2>
-      <p>得点：${score} / 10</p>
-      <button onclick="startGame()">🔁 もう一度挑戦</button>
-    `;
+    showReview();
   }
+}
+
+function showReview() {
+  let html = `<h2>結果</h2><p>得点：${score} / 10</p>`;
+  html += `<div class="review">`;
+  log.forEach((item, i) => {
+    html += `
+      <p>
+        <strong>第${i+1}問</strong> ${item.q}<br>
+        あなた：${item.user} ／ 正解：${item.correct}
+        <span class="${item.isCorrect ? 'correct' : 'wrong'}">
+          ${item.isCorrect ? '（正解）' : '（不正解）'}
+        </span><br>
+        解説：${item.e}
+      </p>
+      <hr>
+    `;
+  });
+  html += `</div>`;
+  html += `<button onclick="startGame()">🔁 もう一度挑戦</button>`;
+
+  document.getElementById("game").innerHTML = html;
 }
 </script>
 </body>
 </html>
+
